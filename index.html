@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Usuarios</title>
+
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+
+</head>
+<body>
+    <section class="grid-principal">
+        <h1>Lista de Usuarios</h1>
+        <h3>Novo usuario</h3>
+
+        <section id="grid-novo-usuario">
+            <input type="nome" id="inputNome" placeholder="Nome">
+            <input type="email" name="inputEmail" id="inputEmail" placeholder="Email">
+            <input type="cidade" name="inputCidade" id="inputCidade" placeholder="Cidade">
+        </section>
+
+        <section id="btnAdicionarCarregar">
+            <button id="btnAdicionarUsuario">Adicionar novo usuario</button>
+            <button id="btnCarregarUsuarios">Carregar Usuarios via API</button>
+        </section>
+
+        <ul id="listaUsuarios" class="cssLista"></ul>
+
+        
+
+    </section>
+
+    
+</body>
+</html>
