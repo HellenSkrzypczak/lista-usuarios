@@ -15,6 +15,10 @@ ul {
 .cssLista{
     padding: 5px;
 }
+.cssButton{
+    padding: 2px;
+    margin-left: 10px;
+}
 #grid-novo-usuario {
     display: flex;
     gap: 20px;
@@ -23,4 +27,5 @@ ul {
 #btnAdicionarCarregar{
     margin-top: 20px;
 }
+
 
