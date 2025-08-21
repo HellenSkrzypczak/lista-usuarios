@@ -11,12 +11,47 @@ const listaUsuarios = document.getElementById('listaUsuarios');
 let usuariosObj = [];
 let usuariosCarregados = false;
 
-async function buscarUsuarios(){
-    const response = await fetch("https://jsonplaceholder.typicode.com/users");
-    usuariosObj = await response.json(); //transforma o dados da API em objeto
-    renderizarListaUsuarios(usuariosObj);
+//-------------------------- CRUD ---------------------------------
+function criarUsuario(nome, email, cidade){
+    let ids = usuariosObj.map(u => u.id);
+    let novoId = (ids.length > 0 ? Math.max(...ids) : 0) + 1;
+
+    return { 
+        id: novoId, 
+        name: nome.value.trim(), 
+        email: email.value.trim(), 
+        address:{ city: cidade.value.trim() }
+    };
 }
 
+function adicionarUsuario(usuario){
+    usuariosObj.push(usuario);
+}
+
+function excluirUsuario(id) {
+    usuariosObj = usuariosObj.filter(usuario => usuario.id !== id)
+};
+
+function editarUsuario(id, novosDados){
+    const index = usuariosObj.findIndex(usuario => usuario.id === id);
+
+    if (index !== -1){
+        usuariosObj[index] = { ...usuariosObj[index], ...novosDados };  
+    }
+    else{
+        alert('Usuário não encontrado.'); return;
+    }
+}
+
+function buscarUsuariosPorValor(valor){
+    valor = valor.toLowerCase();
+    return usuariosObj.filter(usuario => 
+        usuario.name.toLowerCase().includes(valor) || 
+        usuario.email.toLowerCase().includes(valor)
+        );
+}
+
+//-------------------------- FUNÇÕES UI --------------------------
 function limparLista() { 
     listaUsuarios.innerHTML = ""
 }
@@ -27,26 +62,119 @@ function limparCampos() {
     inputCidade.value = "";
 }
 
+function renderizarListaUsuarios(usuarios){
+    limparLista()
+
+    usuarios.forEach((usuario) => {
+
+        const li = document.createElement("li");
+        li.innerHTML = `Nome: ${usuario.name} - Email: ${usuario.email} - Cidade: ${usuario.address.city}`;
+        li.classList.add('cssLista');
+        
+        const divBtn = document.createElement("div");
+        divBtn.classList.add('cssDivBtn');
+
+        const buttonExcluir = document.createElement("button");
+        buttonExcluir.innerText = "Excluir";
+        buttonExcluir.classList.add("cssButton");
+        buttonExcluir.addEventListener('click', () => {
+            excluirUsuario(usuario.id);
+            renderizarListaUsuarios(usuariosObj);
+        });
+
+        const buttonEditar = document.createElement("button");
+        buttonEditar.innerText = "Editar";
+        buttonEditar.classList.add("cssButton");
+        buttonEditar.addEventListener('click', () => {
+            btnSalvarEdicao.dataset.id = usuario.id;
+            inputNome.value = usuario.name;
+            inputEmail.value = usuario.email;
+            inputCidade.value = usuario.address.city;
+            btnSalvarEdicao.style.display = "inline-block";
+        });
+
+        divBtn.appendChild(buttonExcluir);
+        divBtn.appendChild(buttonEditar);
+        li.appendChild(divBtn);
+        listaUsuarios.appendChild(li);
+    })
+};
+
 function validacaoCampos(...campos) {
     return campos.every(campos => campos.value.trim() !== "")
-}
+};
 
-function adicionarNovoUsuario(usuariosObj){
-    let ids = usuariosObj.map(u => u.id);
-    let novoId = (ids.length > 0 ? Math.max(...ids) : 0) + 1;
+//-------------------------- CONTROLE -------------------------------
+async function carregarUsuarios(){
+    const response = await fetch("https://jsonplaceholder.typicode.com/users");
+    usuariosObj = await response.json(); //transforma o dados da API em objeto
+    renderizarListaUsuarios(usuariosObj);
+};
 
-    const novoUsuarioOBJ = { 
-        id: novoId, 
-        name: inputNome.value.trim(), 
-        email: inputEmail.value.trim(), 
-        address:{ city: inputCidade.value.trim() }
+function salvarEdicao(){
+    const id = Number(btnSalvarEdicao.dataset.id);
+    if (!id){ alert('Selecione um usuario para editar!'); return; }
+
+    if(!validacaoCampos(inputNome, inputEmail, inputCidade )){ 
+        alert('Preencha todos os campos!'); return;
     }
+
+    editarUsuario(id, {
+        name: inputNome.value.trim(),
+        email: inputEmail.value.trim(),
+        address: { city: inputCidade.value.trim() }
+    });
+
+    renderizarListaUsuarios();
+    limparCampos();
+    delete btnSalvarEdicao.dataset.id; // limpa o estado
+    btnSalvarEdicao.style.display = "none";
+};
+
+//-------------------------- EVENTOS --------------------------------
+btnCarregarUsuarios.addEventListener('click', async () => {
+    if(!usuariosCarregados) carregarUsuarios();
+});
+
+btnAdicionarUsuario.addEventListener('click', () => {
+    if (validacaoCampos(inputNome, inputEmail, inputCidade)) {
+        const novoUsuario = criarUsuario(inputNome.value, inputEmail.value, inputCidade.value);
+        adicionarUsuario(novoUsuario);
+        renderizarListaUsuarios(usuariosObj);
+        limparCampos();
+    } else {
+        alert("Preencha todos os campos!");
+    }
+});
+
+btnSalvarEdicao.addEventListener('click', salvarEdicao);
+
+btnBusca.addEventListener('click', () => {
+    const valueBusca = inputBusca.value.trim().toLowerCase();
+
+    if(!valueBusca){
+        alert('Digite um nome de usuario para buscar!');
+        renderizarListaUsuarios(usuariosObj);
+        return;
+    }
+    
+    const resultados = buscarUsuariosPorValor(valueBusca);
+    if (resultados.length > 0) {
+        renderizarListaUsuarios(resultados);
+    } else {
+        alert("Nenhum usuário encontrado!");
+    }
+})
+
+/*
+function adicionarNovoUsuario(usuariosObj){
+    
     
     if(validacaoCampos(inputNome, inputEmail, inputCidade))
     {
         alert("Usuario cadastrado com sucesso!");
-        usuariosObj.push(novoUsuarioOBJ); //adiciona o objeto na array de usuarios
-        renderizarListaUsuarios(usuariosObj);
+        adicionarUsuario(novoUsuarioOBJ);
+        renderizarListaUsuarios();
     }
     else {
         alert('Preencha todos os campos!');
@@ -55,119 +183,46 @@ function adicionarNovoUsuario(usuariosObj){
     limparCampos()
 }
 
-function filtrarUsuario(){
-    if(inputBusca){
-        const valueBusca = inputBusca.value.trim();
-        const filtroBusca = usuariosObj.filter(usuario =>  
-            usuario.name.includes(valueBusca) || usuario.email.includes(valueBusca)
-        );
-        
-        usuariosObj.forEach(usuario => {
-            if(usuario.name === filtroBusca.name)
-                
-        });
-
-        //renderizarListaUsuarios();
-    }
-    else{
-        renderizarListaUsuarios();
-    }
+function filtrarUsuario(valueBusca){
     
+    const validaValueBusca = usuariosObj.some(usuario =>   
+        usuario.name.toLowerCase().includes(valueBusca) || 
+        usuario.email.toLowerCase().includes(valueBusca)
+          
+    );        
+    if (validaValueBusca) {
+        
 
+        renderizarListaUsuariosFiltro(filtroBusca);
+    }        
+    else { 
+        alert('Nenhum usuário com esse nome ou email encontrado!'); 
+    }   
+      
 }
 
-function renderizarListaUsuarios(){
+function renderizarListaUsuariosFiltro(filtroBusca){
     limparLista()
-    usuariosObj.forEach((usuario) => {
-        const li = document.createElement("li");
-        li.innerHTML = `Nome: ${usuario.name} - Email: ${usuario.email} - Cidade: ${usuario.address.city}`;
-        li.classList.add('cssLista');
-        listaUsuarios.appendChild(li);
+    filtroBusca.forEach((usuario) => {
+        const liFiltro = document.createElement("li");
+        liFiltro.innerHTML = `Nome: ${usuario.name} - Email: ${usuario.email} - Cidade: ${usuario.address.city}`; 
+        liFiltro.classList.add('cssLista');
+        listaUsuarios.appendChild(liFiltro);      
+    });
 
-        const divBtn = document.createElement("div");
-        divBtn.classList.add('cssDivBtn');
-        //divBtn.appendChild(li);
+}*/
 
-        const buttonExcluir = document.createElement("button");
-        buttonExcluir.innerText = "Excluir";
-        buttonExcluir.classList.add("cssButton");
-        divBtn.appendChild(buttonExcluir);
 
-        buttonExcluir.addEventListener('click', () => {
-            buttonExcluir.dataset.id = usuario.id;
-            const id = Number(buttonExcluir.dataset.id);
-            excluirUsuario(id);
-        });
 
-        const buttonEditar = document.createElement("button");
-        buttonEditar.innerText = "Editar";
-        buttonEditar.classList.add("cssButton");
-        divBtn.appendChild(buttonEditar);
 
-        buttonEditar.addEventListener('click', () => {
-            //idUsuarioEditar = usuario.id;
-            btnSalvarEdicao.dataset.id = usuario.id;
 
-            inputNome.value = usuario.name;
-            inputEmail.value = usuario.email;
-            inputCidade.value = usuario.address.city;
-             btnSalvarEdicao.style.display = "inline-block";
-        })
 
-        li.appendChild(divBtn);
-    })
-}
 
-function editarUsuario(){
-    const id = Number(btnSalvarEdicao.dataset.id);
-    if (!id){
-        alert('Selecione um usuario para editar!')
-        return;
-    }
 
-    const index = usuariosObj.findIndex(usuario => usuario.id === id);
-    if (index === -1){alert('Usuário não encontrado.'); return;}
 
-    //usuariosObj[index].id = idUsuarioEditar;
-    usuariosObj[index].name = inputNome.value.trim();
-    usuariosObj[index].email = inputEmail.value.trim();
-    usuariosObj[index].address.city = inputCidade.value.trim();
 
-    renderizarListaUsuarios();
-    delete btnSalvarEdicao.dataset.id; // limpa o estado
-    limparCampos();
-    btnSalvarEdicao.style.display = "none";
-};
 
-function excluirUsuario(id) {
-    let indice = usuariosObj.findIndex(usuario => usuario.id === id)
-    const removidos = usuariosObj.splice(indice, 1);
-    renderizarListaUsuarios();
-};
 
-btnSalvarEdicao.addEventListener('click', () => {
-    if(validacaoCampos(inputNome, inputEmail, inputCidade ))
-    {
-        editarUsuario()
-    }
-    else { alert('Preencha todos os campos!'); return;}
-})
 
-btnCarregarUsuarios.addEventListener('click', async () => {
-    if(usuariosCarregados)
-    {
-        return;
-    }
-    else{
-        buscarUsuarios() 
-        usuariosCarregados = true;
-    }
-});
 
-btnAdicionarUsuario.addEventListener('click', () => {
-    adicionarNovoUsuario(usuariosObj);
-});
 
-btnBusca.addEventListener('click', () => {
-    filtrarUsuario();
-})
