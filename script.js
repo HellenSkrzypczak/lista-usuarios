@@ -18,9 +18,9 @@ function criarUsuario(nome, email, cidade){
 
     return { 
         id: novoId, 
-        name: nome.value.trim(), 
-        email: email.value.trim(), 
-        address:{ city: cidade.value.trim() }
+        name: nome.trim(), 
+        email: email.trim(), 
+        address:{ city: cidade.trim() }
     };
 }
 
@@ -101,7 +101,7 @@ function renderizarListaUsuarios(usuarios){
 };
 
 function validacaoCampos(...campos) {
-    return campos.every(campos => campos.value.trim() !== "")
+    return campos.every(campo => campo.value.trim() !== "")
 };
 
 //-------------------------- CONTROLE -------------------------------
